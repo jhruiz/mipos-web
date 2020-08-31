@@ -226,4 +226,71 @@ class Producto extends AppModel {
             return $result;
         }        
         
+/**
+ *  Crear producto mediante arreglo 
+ *  @array $arrProductos
+ *  @var $productoId
+ * 
+ */ 
+
+    public function guardarProducto($prodId, $proDesc, $prodCate, $prodMarca, $prodExistMin, $prodExistMax, $prodCostoProm, $prodMostraCatalogo, $prodEmpresaId, $prodSerie){
+        $data=array();
+
+        $producto = new Producto();
+        
+        $data['codigo'] = $prodId;
+        $data['descripcion'] = $proDesc;
+        $data['imagen'] = null;
+        $data['categoria_id'] = $prodCate;
+        $data['marca'] = $prodMarca; //en la base de datos MARCA es un string
+        $data['existenciaminima'] = $prodExistMin;
+        $data['existenciamaxima'] =$prodExistMax;
+        $data['costopromedio'] = $prodCostoProm;
+        $data['mostrarencatalogo'] = $prodMostraCatalogo;
+        $data['empresa_id'] = $prodEmpresaId;
+        $data['serie'] = $prodSerie;
+
+        if($producto->save($data)){
+            return $producto->id;
+        }else{
+            return false;
+        }  
+    }
+
+
+/**
+ *  Verificar si el producto ya fue creado en la base de datos 
+ *  @var $codigo, $serie
+ *  @var $pdr => true: existe, false:no existe
+ * 
+ */ 
+    public function verificarExistenciaProducto($codigo, $serie){
+        $pdr = $this->find('first', array(
+            'conditions' => array(
+                'Producto.codigo' => $codigo,
+                'Producto.serie' => $serie
+            ), 'recursive' => '-1')
+        );
+
+        return $pdr;  
+    }
+
+/**
+ * Modifica el costo de un producto
+ * @var $productoId, $costoProducto
+ */
+    public function actualizarCostoProducto($productoId, $costoProducto){
+        $data = array();
+        $producto = new Producto();
+
+        $data['id'] = $productoId;
+        $data['costopromedio'] = $costoProducto;
+            
+        if($producto->save($data)){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }
+

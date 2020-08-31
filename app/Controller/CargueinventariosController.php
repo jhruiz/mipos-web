@@ -567,7 +567,296 @@ class CargueinventariosController extends AppController {
             
             $this->set(compact('mensaje', 'errorCsv', 'pst')); 
         }
-        
+
+        //----------------------------------Cargue inicial mediante archivo plano --------------------------//
+        public function cargarinvplninicial($mensaje = null, $errorCsv = null){
+            $this->loadModel('Configuraciondato');
+            $confDato = 'planoInventario';
+            $empresaId = $this->Auth->user('empresa_id');
+
+            if ($this->request->is('post')) {
+                $this->loadModel('Producto');
+                $productos = new ProductosController();
+                
+                //se obtiene el archivo que llega por post
+                $posData = $this->request->data;
+
+                // se valida que se haya seleccionado un archivo
+                if(empty($posData['Cargueplano']['cargarInventario']['name'])) {
+                    $mensaje = 'Debe seleccionar un archivo CSV';
+                    return $this->redirect(array('action' => 'cargarinvplninicial', base64_encode($mensaje), ''));
+                }
+
+                //se valida que el archivo sea csv
+                $arrName = split('\.', $posData['Cargueplano']['cargarInventario']['name']);
+
+                if($arrName['1'] != 'csv'){
+                    $mensaje = 'Debe seleccionar un archivo con extensión CSV';
+                    return $this->redirect(array('action' => 'cargarinvplninicial', base64_encode($mensaje), ''));
+                }
+
+                $nameImg = date('Ymdhis');
+                
+                $usuarioId = $this->Auth->user('id');
+
+                if($productos->subirArchivo($posData['Cargueplano']['cargarInventario'], $confDato, $nameImg, $empresaId, $usuarioId)){
+                    //se obtiene la url del archivo 
+                    $urlCsv = $this->Configuraciondato->obtenerValorDatoConfig($confDato) . $empresaId . '//' . $nameImg . '.csv';
+                    $linea = 0;
+                    $archivo = fopen($urlCsv, "r");
+
+                    $arrProductos = array();
+                    $arrErrores = array();
+                    $errorCsv = '';
+                    $mensaje = 'El cargue del inventario fue exitoso!!!';
+                    /*
+                    * $pesoFlag = true-> hay información en esa celda del array $datos[]
+                    * $pesoFlag = false-> empty
+                    */ 
+                    $pesoFlag = true; //inicializa en true
+                    //Lo recorremos
+                    while (($datos = fgetcsv($archivo, ",")) == true)
+                    {
+                        $pesoFlag = true;
+
+                        if($linea == 0){
+                            $linea++;
+                            continue;
+                        }
+                        
+                        /*
+                        * si datos[n] != empty ---> guardar en array arrProductos[]
+                        * si datos[n] == empty ---> pesoFlag:false, guardar en array arrErrores[]
+                        */ 
+                        if(!empty($datos['0'])){
+                            // codigo producto
+                            $prod['cod_producto'] = $datos['0'];
+                            $prodErr['cod_producto'] = $datos['0'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['cod_producto'] = '""';
+                        }
+
+                        if(!empty($datos['1'])){
+                            // cantidad producto
+                            $prod['cantidad'] = $datos['1'];
+                            $prodErr['cantidad'] = $datos['1'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['cantidad'] = '""';
+                        }
+
+                        if(!empty($datos['2'])){
+                            //se despeja el id de la bodega
+                            $arrBodega = split('-', $datos['2']);
+                            //bodega producto
+                            $prod['bodega_id'] = $arrBodega['1'];
+                            $prodErr['bodega_id'] = $datos['2'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['bodega_id'] = '""';
+                        }
+                        
+                        if(!empty($datos['3'])){
+                            //se valida si existe impuesto y se despeja de ser asi
+                            $imp = '';
+                            if($datos['3'] != 'na') {
+                                $arrImp = split('-', $datos['3']);
+                                $imp = $arrImp['1'];
+                                //impuesto producto
+                                $prod['impuesto_id'] = $imp;
+                                $prodErr['impuesto_id'] = $datos['3'];
+                            }
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['impuesto_id'] = '""';
+                        }
+
+                        if(!empty($datos['4'])){
+                            // costo producto
+                            $prod['costo_producto'] = $datos['4'];
+                            $prodErr['costo_producto'] = $datos['4'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['costo_producto'] = '';
+                        }
+
+                        if(!empty($datos['5'])){ //$dato['5] -> precio_venta = precio_maximo
+                            // precio maximo
+                            $prod['precio_maximo'] = $datos['5'];
+                            $prodErr['precio_venta'] = $datos['5'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['precio_venta'] = '""';
+                        }
+
+                        if(!empty($datos['4'])){ //$dato['4'] -> costo producto = precio minimo
+                            // precio minimo
+                            $prod['precio_minimo'] = $datos['4'];
+                            $prodErr['costo_producto'] = $datos['4'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['precio_producto'] = '""';
+                        }
+
+                        if(!empty($datos['5'])){
+                            // precio venta
+                            $prod['precio_venta'] = $datos['5'];
+                            $prodErr['precio_venta'] = $datos['5'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['precio_venta'] = '""';
+                        }
+
+                        if(!empty($datos['6'])){
+                            //se despeja el id del proveedor
+                            $arrProv = split('-', $datos['6']);
+                            //proveedor id
+                            $prod['proveedores_id'] = $arrProv['1'];
+                            $prodErr['proveedores_id'] = $datos['6'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['proveedores_id'] = '""';
+                        }
+
+                        if(!empty($datos['7'])){
+                            // num factura
+                            $prod['num_factura'] = $datos['7'];
+                            $prodErr['num_factura'] = $datos['7'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['num_factura'] = '""';
+                        }
+
+                        if(!empty($datos['8'])){
+                            // num factura
+                            $prod['descripcion_producto'] = $datos['8'];
+                            $prodErr['descripcion_producto'] = $datos['8'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['descripcion_producto'] = '""';
+                        }
+                        
+                        if(!empty($datos['9'])){
+                            //se despeja el id del categoria
+                            $arrCategoria = split('-', $datos['9']);
+                            //categoria id
+                            $prod['categoria_id'] = $arrCategoria['1'];
+                            $prodErr['categoria_id'] = $datos['9'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['categoria_id'] = '""';
+                        }
+                        
+                        if(!empty($datos['10'])){
+                            //se despeja el id de marca
+                            $arrMarca = split('-', $datos['10']);
+                            //marca id
+                            $prod['marca_id'] = $arrMarca['1'];
+                            $prodErr['marca_id'] = $datos['10'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['marca_id'] = '""';
+                        }
+                        
+                        if(!empty($datos['11'])){
+                            // existencia minima
+                            $prod['existencia_min'] = $datos['11'];
+                            $prodErr['existencia_min'] = $datos['11'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['existencia_min'] = '""';
+                        }
+
+                        if(!empty($datos['12'])){
+                            // existencia maxima
+                            $prod['existencia_max'] = $datos['12'];
+                            $prodErr['existencia_max'] = $datos['12'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['existencia_max'] = '""';
+                        }
+
+                        if(!empty($datos['13'])){
+                            // costo promedio
+                            $prod['costo_prom'] = $datos['13'];
+                            $prodErr['costo_prom'] = $datos['13'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['costo_prom'] = '""';
+                        }
+
+                        if(!empty($datos['14'])){
+                            // serie producto
+                            $prod['serie_producto'] = $datos['14'];
+                            $prodErr['serie_producto'] = $datos['14'];
+                        }else{
+                            $pesoFlag= false;
+                            $prodErr['serie_producto'] = '""';
+                        }
+
+                        /**
+                         *  $pesoFlag : 
+                         *   true -> crea el producto
+                         *  false -> crear el array de errores
+                         */
+                        if($pesoFlag){
+                            $prod['tipopago'] = 1;
+                            $prod['mostrar_catalogo'] = '1';
+                            $prod['empresa_id'] = $empresaId;
+                            $prod['usuario_id'] = $usuarioId;
+                            
+                            $arrProductos[] = $prod;
+                            //array_push ($arrProductos , $prod );
+                            // echo '<pre>';
+                            // print_r($arrProductos);
+                            // echo '</pre>';
+                            // die();   
+                        }else{
+                            $arrErrores[] = $prodErr;
+                            // echo '<pre>';
+                            // print_r($arrErrores);
+                            // echo '</pre>';
+                            // die(); 
+                        }          
+                    }
+                    //Cerramos el archivo
+                    fclose($archivo);
+
+                } else {
+                    $mensaje = "No fue posible cargar el archivo plano. Por favor, inténtelo nuevamente.";
+                }
+                //se elimina el archivo de cargue de inventario
+                unlink($urlCsv);
+                $nameError = '';
+
+                // verifica si el arreglo esta vacio
+                if(empty($arrProductos) && empty($arrErrores) ){
+                    $mensaje = "El archivo CSV se encuentra vacio, por favor verifique el contenido!!!";
+                    return $this->redirect(array('action' => 'cargarinvplninicial', base64_encode($mensaje), $nameError));
+                }
+
+                if(!empty($arrErrores)){
+                    $nameError = date('Ymdhis');
+                    $errorCsv = $this->Configuraciondato->obtenerValorDatoConfig($confDato) . $empresaId . '//' . $nameError . '.csv';
+                    $mensaje = "No fue posible realizar el cargue de todos los productos debido a inconsistencias en el archivo. ";
+                    $mensaje .= "Por favor, corrija los registros e inténtelo nuevamente. Para obtener los registros con error, seleccione el siguiente botón ";
+                    $this->crearPlanoErroresCargueInicial($errorCsv, $arrErrores);
+                } 
+                $this->cargarInventarioXPlanoInicial($arrProductos); 
+
+                return $this->redirect(array('action' => 'cargarinvplninicial', base64_encode($mensaje), $nameError));
+                
+            }
+
+            if(!empty($errorCsv)){
+                $errorCsv = $this->Configuraciondato->obtenerValorDatoConfig($confDato) . $empresaId . '//' . $errorCsv . '.csv';    
+            }
+
+            $this->set(compact('mensaje', 'errorCsv', 'pst'));
+        }
+        //----------------------------------Finaliza aqui --------------------------//
+
         // valida que se hayan ingresado todos los datos del cargue de inventario
         public function validarCargue($datos){
 
@@ -592,9 +881,9 @@ class CargueinventariosController extends AppController {
             $encapsulador = '"';
             
             $arrCabecera[] = array( 'cod_producto', 'cantidad', 'cod_bodega', 
-                                    'cod_impuesto', 'costo_producto', 'precio_maximo', 
-                                    'precio_minimo', 'precio_venta', 'cod_proveedor',
-                                    'cod_tipo_pago', 'num_factura');
+                                    'cod_impuesto', 'costo_producto', 'precio_maximo',
+                                    'precio_minimo', 'precio_venta', 'cod_proveedor', 
+                                    'cod_tipo_pago', 'num_fatura');
                                     
             foreach($arrCabecera as $cab) {
                 fputcsv($file_handle, $cab, $delimitador, $encapsulador);
@@ -602,6 +891,38 @@ class CargueinventariosController extends AppController {
             
             foreach ($arrErrores as $linea) {
                 fputcsv($file_handle, $linea, $delimitador, $encapsulador);
+            }
+            
+            rewind($file_handle);
+            fclose($file_handle);  
+
+        }
+
+        //se crea el plano indicando los productos que no fue posible cargar
+        public function crearPlanoErroresCargueInicial($urlCsv, $arrErrores) {
+
+            $file_handle = fopen($urlCsv, 'w');
+            $delimitador = ',';
+            $encapsulador = '"';
+            
+            $arrCabecera[] = array( 'cod_producto', 'cantidad', 'cod_bodega', 
+                                    'cod_impuesto', 'costo_producto', 'precio_venta', 
+                                    'cod_proveedor', 'num_factura', 'descripcion_producto',
+                                    'cod_categoria_producto', 'cod_marca_producto', 'existencia_minima', 
+                                    'existencia_maxima', 'costo_promedio', 'serie_producto');
+                                    
+            foreach($arrCabecera as $cab) {
+                fputcsv($file_handle, $cab, $delimitador, $encapsulador);
+            }
+
+            // echo('<pre>');
+            // print_r($arrErrores);
+            // echo('</pre>');
+            // die();
+
+            foreach ($arrErrores as $linea) {
+                fputcsv($file_handle, $linea, $delimitador, $encapsulador);
+                //fputcsv($file_handle, array($linea), $delimitador, $encapsulador);
             }
             
             rewind($file_handle);
@@ -645,7 +966,6 @@ class CargueinventariosController extends AppController {
                         /*Si existe se debe actualizar la información del inventario*/
                         $cantidadActual = $infoProducto['Cargueinventario']['existenciaactual'];
                         $costoActual = $infoProducto['Cargueinventario']['costoproducto'];
-    
                         $cantidadACargar = $infP['cantidad'];
                         $costoACargar = $infP['costo_producto'];
     
@@ -720,15 +1040,194 @@ class CargueinventariosController extends AppController {
             }
             
         }
-        
+
+        //------------------------se carga al inventario los productos NUEVOS relacionados en el documento  --------------------------//
+        public function cargarInventarioXPlanoInicial($arrProductos){
+
+            $this->loadModel('Documento');
+            $this->loadModel('Detalledocumento');
+            $this->loadModel('Proveedore');
+            $this->loadModel('Cuentaspendiente');
+            $this->loadModel('Cargueinventario');
+            $this->loadModel('Anotacione');
+            $this->loadModel('Auditoria');
+            $this->loadModel('Producto');
+
+            // echo '<pre>';
+            // print_r($arrProductos);
+            // echo '</pre>';
+            // die();
+
+            try{
+                //se crea el documento
+                $tipoDocumentoId = '1';
+
+                if(isset($arrProductos[0])){
+                    //se guarda el documento y se obtiene el id del mismo
+                    $documentoId = $this->Documento->guardarDocumento($tipoDocumentoId,$arrProductos['0']['empresa_id'],$arrProductos['0']['usuario_id']);  
+
+                    //se actualiza el codigo del documento ya que en mysql no se admite mas de un autoincrement//
+                    $this->Documento->actualizarCodigoDocumento($documentoId); 
+                }
+                //se guarda la informacion del detalle del documento y del inventario
+                foreach ($arrProductos as $infP){
+                    
+                    //obtiene los datos necesarios para crear el producto
+                    $prodCod = ($infP['cod_producto']);
+                    $proDesc = ($infP['descripcion_producto']);
+                    $prodCate = ($infP['categoria_id']);
+                    $prodMarca = ($infP['marca_id']);
+                    $prodExistMin = ($infP['existencia_min']);
+                    $prodExistMax = ($infP['existencia_max']);
+                    $prodCostoProm = ($infP['costo_prom']);
+                    $prodMostraCatalogo = ($infP['mostrar_catalogo']);
+                    $empresa_id = ($infP['empresa_id']);
+                    $prodSerie = ($infP['serie_producto']);
+ 
+                    $ProductoId = null; //se inicializa vacio
+                    
+                    //verifica si el producto existe, salida->true/false
+                    $existenciaProducto = $this->Producto->verificarExistenciaProducto($prodCod, $prodSerie);
+
+                    if(isset($existenciaProducto['Producto'])){
+                        //si existe el producto, obtiene el id
+                        $ProductoId = $existenciaProducto['Producto']['id'];
+
+                        //Si existe se debe actualizar la información del inventario (cargue inventario)
+                        $infoProducto = $this->Cargueinventario->obtenerProductoPorIdDeposito($ProductoId,$infP['bodega_id']);
+                        
+                        $cantidadActual = $infoProducto['Cargueinventario']['existenciaactual'];
+                        $costoActual = $infoProducto['Cargueinventario']['costoproducto'];
+
+                        $cantidadACargar = ($infP['cantidad']);
+                        $costoACargar = ($infP['costo_producto']);
+
+                        $promedioPonderado = floor(($cantidadActual*$costoActual)+($cantidadACargar*$costoACargar))/($cantidadActual+$cantidadACargar);
+                        $cantidadFinal = $cantidadActual+$cantidadACargar;
+                        
+                        $data = array();
+                        $data['id'] = $infoProducto['Cargueinventario']['id'];
+                        $data['deposito_id'] = $infP['bodega_id'];
+                        $data['costoproducto'] = $promedioPonderado;
+                        $data['existenciaactual'] = $cantidadFinal;
+                        $data['preciomaximo'] = $infP['precio_maximo'];
+                        $data['preciominimo'] = $infP['precio_minimo'];
+                        $data['precioventa'] = $infP['precio_venta'];
+                        $data['usuario_id'] = $infP['usuario_id'];
+                        $data['estado_id'] = '1';
+                        $data['proveedore_id'] = $infP['proveedores_id'];
+                        $data['tipopago_id'] = '1';
+                        $data['numerofactura'] = $infP['num_factura'];
+                        $data['empresa_id'] = $infP['empresa_id'];
+                        
+                        /*Se actualiza el registro del producto en el inventario*/
+                        $this->Cargueinventario->save($data);
+                        // Actualiza el valor del producto en la base de datos
+                        $this->Producto->actualizarCostoProducto($ProductoId, $infP['costo_prom']);
+                    }else{
+                        //Si no existe el producto, Se crea (sin imagen) y se obtiene el id
+                        $ProductoId = $this->Producto->guardarProducto( 
+                            $prodCod, $proDesc, $prodCate, 
+                            $prodMarca, $prodExistMin, $prodExistMax, 
+                            $prodCostoProm, $prodMostraCatalogo, $empresa_id, 
+                            $prodSerie
+                        );
+
+                        
+                    $detDocBodegaId = ($infP['bodega_id']);
+                    $detDocCostoProducto = ($infP['costo_producto']);
+                    $detDocCantidad = ($infP['cantidad']);
+                    $detDocPrecioMax = ($infP['precio_maximo']);
+                    $detDocPrecioMin = ($infP['precio_minimo']);
+                    $detDocPrecioVenta = ($infP['precio_venta']);
+                    $detDocProveedores = ($infP['proveedores_id']);
+                    $detDocTipoPago = ($infP['tipopago']); 
+                    $detDocNumFact = ($infP['num_factura']);
+
+                    
+                    if(!$this->Detalledocumento->guardarDetalleDocumento(    
+                        $ProductoId,
+                        $depOrg=null, 
+                        $detDocBodegaId,                                                    
+                        $detDocCostoProducto, 
+                        $detDocCantidad, 
+                        $detDocPrecioMax,                                                    
+                        $detDocPrecioMin,
+                        $detDocPrecioVenta,
+                        $detDocProveedores,
+                        $detDocTipoPago, 
+                        $detDocNumFact, 
+                        $documentoId)){  
+                    }
+
+                    $cargueInvBodegaId = ($infP['bodega_id']);
+                    $cargueInvCostoProducto = ($infP['costo_producto']);
+                    $cargueInvCantidad = ($infP['cantidad']);
+                    $cargueInvPrecioMax = ($infP['precio_maximo']);
+                    $cargueInvPrecioMin = ($infP['precio_minimo']);
+                    $cargueInvPrecioVenta = ($infP['precio_venta']);
+                    $cargueInvUsuarioId = ($infP['usuario_id']);
+                    $cargueInvProveedorId = ($infP['proveedores_id']);
+                    $cargueInvNumFactura = ($infP['num_factura']);
+                    $cargueInvEmpresaId = ($infP['empresa_id']);
+                    
+                    //se carga en el inventario el producto
+                    if(!$this->Cargueinventario->guardarCargueInventario(   
+                        //$infP['producto_id'],
+                        $ProductoId, 
+                        $cargueInvBodegaId, 
+                        $cargueInvCostoProducto,
+                        $cargueInvCantidad, 
+                        $cargueInvPrecioMax, 
+                        $cargueInvPrecioMin,
+                        $cargueInvPrecioVenta, 
+                        $cargueInvUsuarioId, 
+                        '1',
+                        $cargueInvProveedorId, 
+                        null, 
+                        $cargueInvNumFactura, 
+                        $cargueInvEmpresaId)){
+                    }         
+                }
+                    }
+
+
+                if(isset($arrProductos[0])){
+                    //Se guarda la nota hecha sobre el documento
+                    $this->Anotacione->guardarNota('Cargue inventario por archivo plano', $infP['usuario_id'], $documentoId);
+
+                    //Se obtiene la info del documento cargado para el registro en auditoria
+                    $infoDoc = $this->Documento->obtenerInfoDocumentoId($documentoId);
+
+                    //Se obtiene la acción de la auditoria
+                    $idAud = '1';
+                    $accion = $this->Auditoria->accionAuditoria($idAud);
+
+                    //Se obtiene la descripcion de la auditoria
+                    $arrDescripcionAud['codigoDoc'] = $infoDoc['Documento']['codigo'];
+                    $descripcion = $this->Auditoria->descripcionAuditoria($idAud, $arrDescripcionAud);
+
+                    //Se guarda la la auditoria
+                    $this->Auditoria->logAuditoria($infP['usuario_id'], $descripcion, $accion);            
+                }
+
+                return true;
+                
+            } catch (Exception $e) {
+                return false;
+            }
+            
+        }
+        //----------------------------------Finaliza aqui --------------------------//
+
         public function actualizarInfoImpuestos($productoId,$depositoId,$impuestoId){
             
             $this->loadModel('CargueinventariosImpuesto');
             
-            /*Se obtiene el id del cargue del inventario*/
+            //Se obtiene el id del cargue del inventario
             $infoCargueInv = $this->Cargueinventario->obtenerProductoPorIdDeposito($productoId, $depositoId);
             
-            /*Se elimina el regisro de impuestos que tenga asignado el cargue*/
+            //Se elimina el regisro de impuestos que tenga asignado el cargue
             $this->CargueinventariosImpuesto->deleteAll(array('CargueinventariosImpuesto.cargueinventario_id' => $infoCargueInv['Cargueinventario']['id']), false);
             
             if(!empty($impuestoId)){

@@ -70,7 +70,7 @@ class Utilidade extends AppModel {
 		)
 	);
         
-        public function guardarUtilidadProducto($crgInvId,$cantidadProducto,$valorVenta,$utilidadBruta,$utilidadPorcentual,$empresaId){
+        public function guardarUtilidadProducto($crgInvId,$cantidadProducto,$valorVenta,$utilidadBruta,$utilidadPorcentual,$empresaId, $facturaId, $costoProducto){
             $data = array();
             $utilidad = new Utilidade();
             
@@ -79,7 +79,9 @@ class Utilidade extends AppModel {
             $data['precioventa'] = $valorVenta;
             $data['utilidadbruta'] = $utilidadBruta;
             $data['utilidadporcentual'] = $utilidadPorcentual;
-            $data['empresa_id'] = $empresaId;
+			$data['empresa_id'] = $empresaId;
+			$data['factura_id'] = $facturaId;
+			$data['costo_producto'] = $costoProducto;
 
             if($utilidad->save($data)){
                 return true;                

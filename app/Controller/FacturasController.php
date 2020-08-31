@@ -477,7 +477,8 @@ class FacturasController extends AppController {
                 $utilidadBruta = $costoTotalProd - $totalCosto;
                 $utilidadPorcentual = $utilidadBruta / ($costoTotalProd * 100);
                 $this->Utilidade->guardarUtilidadProducto($arrCrgInv['Cargueinventario']['id'], $detallePrefactura['Prefacturasdetalle']['cantidad'], 
-                        $detallePrefactura['Prefacturasdetalle']['costoventa'], $utilidadBruta, $utilidadPorcentual, $arrEmpresa['Empresa']['id']);
+                        $detallePrefactura['Prefacturasdetalle']['costoventa'], $utilidadBruta, $utilidadPorcentual, $arrEmpresa['Empresa']['id'],
+                        $facturaId, $arrCrgInv['Cargueinventario']['costoproducto']);
             }
             
             /*se valida si la prefactura contien ordenes de compra*/

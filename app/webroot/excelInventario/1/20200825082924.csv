@@ -1,0 +1,2 @@
+cod_producto,cantidad,cod_bodega,cod_impuesto,costo_producto,precio_maximo,precio_minimo,precio_venta,cod_proveedor,cod_tipo_pago,num_factura
+1300,10,bod-2,imp-3,1000,3000,2500,5000,pro-8,1,999,leche,cate-12,marc-13,100,200,2000,1,5,"9 "

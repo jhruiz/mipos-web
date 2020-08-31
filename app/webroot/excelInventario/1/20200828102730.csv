@@ -1,0 +1,3 @@
+cod_producto,cantidad,cod_bodega,cod_impuesto,costo_producto,precio_venta,cod_proveedor,num_factura,descripcion_producto,cod_categoria_producto,cod_marca_producto,existencia_minima,existencia_maxima,costo_promedio,serie_producto
+QWE05,14,BOD-4,IMP-3,5000,1400000,PROV-14,998,applewatch,CAT-1,MAR-1,5,10,4000,13
+QWE05,14,BOD-4,IMP-3,5000,1400000,PROV-14,998,applewatch,CAT-1,MAR-1,5,10,4000,13

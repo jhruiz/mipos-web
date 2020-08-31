@@ -13,8 +13,8 @@ class DATABASE_CONFIG {
 		'datasource' => 'Database/Mysql',
 		'persistent' => false,
 		'host' => 'localhost',
-		'login' => 'miposcom_mysql',
-		'password' => 'root9002',
+		'login' => 'root',
+		'password' => 'root',
 		'database' => 'miposcom_mipos',
 	);
 }
