@@ -678,7 +678,7 @@ class CargueinventariosController extends AppController {
                             $prodErr['costo_producto'] = $datos['4'];
                         }else{
                             $pesoFlag= false;
-                            $prodErr['costo_producto'] = '';
+                            $prodErr['costo_producto'] = '""';
                         }
 
                         if(!empty($datos['5'])){ //$dato['5] -> precio_venta = precio_maximo
@@ -709,87 +709,67 @@ class CargueinventariosController extends AppController {
                         }
 
                         if(!empty($datos['6'])){
-                            //se despeja el id del proveedor
-                            $arrProv = split('-', $datos['6']);
-                            //proveedor id
-                            $prod['proveedores_id'] = $arrProv['1'];
-                            $prodErr['proveedores_id'] = $datos['6'];
-                        }else{
-                            $pesoFlag= false;
-                            $prodErr['proveedores_id'] = '""';
-                        }
-
-                        if(!empty($datos['7'])){
                             // num factura
-                            $prod['num_factura'] = $datos['7'];
-                            $prodErr['num_factura'] = $datos['7'];
-                        }else{
-                            $pesoFlag= false;
-                            $prodErr['num_factura'] = '""';
-                        }
-
-                        if(!empty($datos['8'])){
-                            // num factura
-                            $prod['descripcion_producto'] = $datos['8'];
-                            $prodErr['descripcion_producto'] = $datos['8'];
+                            $prod['descripcion_producto'] = $datos['6'];
+                            $prodErr['descripcion_producto'] = $datos['6'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['descripcion_producto'] = '""';
                         }
                         
-                        if(!empty($datos['9'])){
-                            //se despeja el id del categoria
-                            $arrCategoria = split('-', $datos['9']);
+                        if(!empty($datos['7'])){
+                            //se despeja el id del categoria (grupo)
+                            $arrCategoria = split('-', $datos['7']);
                             //categoria id
                             $prod['categoria_id'] = $arrCategoria['1'];
-                            $prodErr['categoria_id'] = $datos['9'];
+                            $prodErr['categoria_id'] = $datos['7'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['categoria_id'] = '""';
                         }
                         
-                        if(!empty($datos['10'])){
-                            //se despeja el id de marca
-                            $arrMarca = split('-', $datos['10']);
+                        if(!empty($datos['8'])){
+                            //se despeja el id de marca (linea)
+                            $arrMarca = split('-', $datos['8']);
                             //marca id
                             $prod['marca_id'] = $arrMarca['1'];
-                            $prodErr['marca_id'] = $datos['10'];
+                            $prodErr['marca_id'] = $datos['8'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['marca_id'] = '""';
                         }
                         
-                        if(!empty($datos['11'])){
+                        if(!empty($datos['9'])){
                             // existencia minima
-                            $prod['existencia_min'] = $datos['11'];
-                            $prodErr['existencia_min'] = $datos['11'];
+                            $prod['existencia_min'] = $datos['9'];
+                            $prodErr['existencia_min'] = $datos['9'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['existencia_min'] = '""';
                         }
 
-                        if(!empty($datos['12'])){
+                        if(!empty($datos['10'])){
                             // existencia maxima
-                            $prod['existencia_max'] = $datos['12'];
-                            $prodErr['existencia_max'] = $datos['12'];
+                            $prod['existencia_max'] = $datos['10'];
+                            $prodErr['existencia_max'] = $datos['10'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['existencia_max'] = '""';
                         }
 
-                        if(!empty($datos['13'])){
+                        if(!empty($datos['11'])){
                             // costo promedio
-                            $prod['costo_prom'] = $datos['13'];
-                            $prodErr['costo_prom'] = $datos['13'];
+                            $prod['costo_prom'] = $datos['11'];
+                            $prodErr['costo_prom'] = $datos['11'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['costo_prom'] = '""';
                         }
 
-                        if(!empty($datos['14'])){
+                        if(!empty($datos['12'])){
                             // serie producto
-                            $prod['serie_producto'] = $datos['14'];
-                            $prodErr['serie_producto'] = $datos['14'];
+                            $prod['serie_producto'] = $datos['12'];
+                            $prodErr['serie_producto'] = $datos['12'];
                         }else{
                             $pesoFlag= false;
                             $prodErr['serie_producto'] = '""';
@@ -806,18 +786,10 @@ class CargueinventariosController extends AppController {
                             $prod['empresa_id'] = $empresaId;
                             $prod['usuario_id'] = $usuarioId;
                             
-                            $arrProductos[] = $prod;
-                            //array_push ($arrProductos , $prod );
-                            // echo '<pre>';
-                            // print_r($arrProductos);
-                            // echo '</pre>';
-                            // die();   
+                            array_push ($arrProductos , $prod );   
                         }else{
-                            $arrErrores[] = $prodErr;
-                            // echo '<pre>';
-                            // print_r($arrErrores);
-                            // echo '</pre>';
-                            // die(); 
+                            
+                            array_push ($arrErrores , $prodErr );
                         }          
                     }
                     //Cerramos el archivo
@@ -906,23 +878,16 @@ class CargueinventariosController extends AppController {
             $encapsulador = '"';
             
             $arrCabecera[] = array( 'cod_producto', 'cantidad', 'cod_bodega', 
-                                    'cod_impuesto', 'costo_producto', 'precio_venta', 
-                                    'cod_proveedor', 'num_factura', 'descripcion_producto',
-                                    'cod_categoria_producto', 'cod_marca_producto', 'existencia_minima', 
+                                    'cod_impuesto', 'costo_producto', 'lista_precios', 
+                                    'descripcion_producto', 'grupo', 'linea', 'existencia_minima', 
                                     'existencia_maxima', 'costo_promedio', 'serie_producto');
                                     
             foreach($arrCabecera as $cab) {
                 fputcsv($file_handle, $cab, $delimitador, $encapsulador);
             }
 
-            // echo('<pre>');
-            // print_r($arrErrores);
-            // echo('</pre>');
-            // die();
-
             foreach ($arrErrores as $linea) {
                 fputcsv($file_handle, $linea, $delimitador, $encapsulador);
-                //fputcsv($file_handle, array($linea), $delimitador, $encapsulador);
             }
             
             rewind($file_handle);
@@ -1053,11 +1018,6 @@ class CargueinventariosController extends AppController {
             $this->loadModel('Auditoria');
             $this->loadModel('Producto');
 
-            // echo '<pre>';
-            // print_r($arrProductos);
-            // echo '</pre>';
-            // die();
-
             try{
                 //se crea el documento
                 $tipoDocumentoId = '1';
@@ -1075,8 +1035,8 @@ class CargueinventariosController extends AppController {
                     //obtiene los datos necesarios para crear el producto
                     $prodCod = ($infP['cod_producto']);
                     $proDesc = ($infP['descripcion_producto']);
-                    $prodCate = ($infP['categoria_id']);
-                    $prodMarca = ($infP['marca_id']);
+                    $prodCate = ($infP['categoria_id']);//grupo
+                    $prodMarca = ($infP['marca_id']);//linea
                     $prodExistMin = ($infP['existencia_min']);
                     $prodExistMax = ($infP['existencia_max']);
                     $prodCostoProm = ($infP['costo_prom']);
@@ -1115,9 +1075,9 @@ class CargueinventariosController extends AppController {
                         $data['precioventa'] = $infP['precio_venta'];
                         $data['usuario_id'] = $infP['usuario_id'];
                         $data['estado_id'] = '1';
-                        $data['proveedore_id'] = $infP['proveedores_id'];
+                        //$data['proveedore_id'] = $infP['proveedores_id'];
                         $data['tipopago_id'] = '1';
-                        $data['numerofactura'] = $infP['num_factura'];
+                        //$data['numerofactura'] = $infP['num_factura'];
                         $data['empresa_id'] = $infP['empresa_id'];
                         
                         /*Se actualiza el registro del producto en el inventario*/
@@ -1140,9 +1100,9 @@ class CargueinventariosController extends AppController {
                     $detDocPrecioMax = ($infP['precio_maximo']);
                     $detDocPrecioMin = ($infP['precio_minimo']);
                     $detDocPrecioVenta = ($infP['precio_venta']);
-                    $detDocProveedores = ($infP['proveedores_id']);
+                    //$detDocProveedores = ($infP['proveedores_id']);
                     $detDocTipoPago = ($infP['tipopago']); 
-                    $detDocNumFact = ($infP['num_factura']);
+                    //$detDocNumFact = ($infP['num_factura']);
 
                     
                     if(!$this->Detalledocumento->guardarDetalleDocumento(    
@@ -1154,9 +1114,9 @@ class CargueinventariosController extends AppController {
                         $detDocPrecioMax,                                                    
                         $detDocPrecioMin,
                         $detDocPrecioVenta,
-                        $detDocProveedores,
+                        $detDocProveedores=null,
                         $detDocTipoPago, 
-                        $detDocNumFact, 
+                        $detDocNumFact=null, 
                         $documentoId)){  
                     }
 
@@ -1167,13 +1127,12 @@ class CargueinventariosController extends AppController {
                     $cargueInvPrecioMin = ($infP['precio_minimo']);
                     $cargueInvPrecioVenta = ($infP['precio_venta']);
                     $cargueInvUsuarioId = ($infP['usuario_id']);
-                    $cargueInvProveedorId = ($infP['proveedores_id']);
-                    $cargueInvNumFactura = ($infP['num_factura']);
+                    //$cargueInvProveedorId = ($infP['proveedores_id']);
+                    //$cargueInvNumFactura = ($infP['num_factura']);
                     $cargueInvEmpresaId = ($infP['empresa_id']);
                     
                     //se carga en el inventario el producto
                     if(!$this->Cargueinventario->guardarCargueInventario(   
-                        //$infP['producto_id'],
                         $ProductoId, 
                         $cargueInvBodegaId, 
                         $cargueInvCostoProducto,
@@ -1183,9 +1142,9 @@ class CargueinventariosController extends AppController {
                         $cargueInvPrecioVenta, 
                         $cargueInvUsuarioId, 
                         '1',
-                        $cargueInvProveedorId, 
+                        $cargueInvProveedorId=null, 
                         null, 
-                        $cargueInvNumFactura, 
+                        $cargueInvNumFactura=null, 
                         $cargueInvEmpresaId)){
                     }         
                 }

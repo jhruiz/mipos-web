@@ -1,0 +1,3 @@
+cod_producto,cantidad,cod_bodega,cod_impuesto,costo_producto,lista_precios,descripcion_producto,grupo,linea,existencia_minima,existencia_maxima,costo_promedio,serie_producto
+Y05,10,BOD-02,IMP-02,1000,2000,LLAVES,"""""","""""","""""","""""","""""",""""""
+Y02,10,BOD-02,IMP-02,1000,2000,CANDADOS,"""""","""""","""""","""""","""""",""""""
